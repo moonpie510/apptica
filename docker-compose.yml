@@ -1,38 +1,81 @@
 services:
-  nginx:
-    image: nginx:1.29.1-alpine
-    container_name: nginx
-    volumes:
-      - .:/var/www/apptica/site
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-      - ./docker/nginx/log:/var/log/nginx
-    ports:
-      - "8080:80"
-    depends_on:
-      - php-fpm
+    nginx:
+        image: nginx:1.29.1-alpine
+        container_name: nginx
+        volumes:
+            - .:/var/www/apptica/site
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d
+            - ./docker/nginx/log:/var/log/nginx
+        ports:
+            - "8080:80"
+        depends_on:
+            - php-fpm
 
-  php-fpm:
-    build: ./docker/php-fpm
-    container_name: php-fpm
-    restart: unless-stopped
-    working_dir: /var/www/apptica/site
-    volumes:
-      - ./docker/php-fpm/php.ini:/etc/php/8.3/fpm/conf.d/99-overrides.ini
-      - ./docker/php-fpm/php-fpm.conf:/etc/php/8.3/fpm/pool.d/z-overrides.conf
-      - ./docker/php-fpm/log:/var/log/php-fpm
-      - .:/var/www/apptica/site
-    depends_on:
-      - postgres
+    php-fpm:
+        build: ./docker/php-fpm
+        container_name: php-fpm
+        restart: unless-stopped
+        working_dir: /var/www/apptica/site
+        volumes:
+            - ./docker/php-fpm/php.ini:/etc/php/8.3/fpm/conf.d/99-overrides.ini
+            - ./docker/php-fpm/php-fpm.conf:/etc/php/8.3/fpm/pool.d/z-overrides.conf
+            - ./docker/php-fpm/log:/var/log/php-fpm
+            - .:/var/www/apptica/site
+        depends_on:
+            - postgres
 
-  postgres:
-    image: postgres:18.0
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=apptica
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./docker/postgres/pgdata:/var/lib/postgresql/data/pgdata
+    postgres:
+        image: postgres:18.0
+        container_name: postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=root
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=apptica
+        ports:
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+    elasticsearch:
+        image: elasticsearch:8.11.1
+        container_name: elasticsearch
+        environment:
+            - http.host=0.0.0.0
+            - transport.host=127.0.0.1
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        volumes:
+            - ./docker/elasticsearch:/usr/share/elasticsearch/data
+        ports:
+            - "9200:9200"
+
+    logstash:
+        image: logstash:7.17.0
+        container_name: logstash
+        volumes:
+            - ./docker/logstash/config:/usr/share/logstash/config
+            - ./docker/logstash/pipeline:/usr/share/logstash/pipeline
+        ports:
+            - "5000:5000"
+        depends_on:
+            - elasticsearch
+
+    kibana:
+        image: kibana:8.11.1
+        container_name: kibana
+        ports:
+            - "5601:5601"
+        environment:
+            ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+            ELASTICSEARCH_URL: http://elasticsearch:9200
+        depends_on:
+            - elasticsearch
+
+volumes:
+    pgdata:

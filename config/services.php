@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'apptica' => [
+        'url' => env('APPTICA_URL', 'https://api.apptica.com'),
+        'token' => env('APPTICA_TOKEN', 'fVN5Q9KVOlOHDx9mOsKPAQsFBlEhBOwguLkNEDTZvKzJzT3l'),
+    ]
 ];
