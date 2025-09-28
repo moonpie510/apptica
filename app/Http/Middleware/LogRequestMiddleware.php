@@ -34,7 +34,6 @@ class LogRequestMiddleware
             'status_code' => $response->getStatusCode(),
             'content' => $response->getContent(),
             'response_size' => strlen($response->getContent()),
-            'duration' => microtime(true) - LARAVEL_START,
         ]);
     }
 }
