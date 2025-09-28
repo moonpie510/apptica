@@ -10,7 +10,7 @@ docker compose exec php-fpm bash -c "
   php artisan storage:link &&
   chmod 777 -R ./storage &&
   chmod 777 -R ./bootstrap/cache &&
-  php artisan migrate --seed &&
+  php artisan migrate:fresh --seed &&
   php artisan apptica:upload-data &&
   php artisan test:create-schema
 "
