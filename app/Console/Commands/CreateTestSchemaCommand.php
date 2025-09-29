@@ -26,6 +26,11 @@ class CreateTestSchemaCommand extends Command
      */
     public function handle(): void
     {
+        if (DB::statement("SELECT datname FROM pg_database WHERE datname = 'apptica_test'")) {
+            $this->info('База данных apptica_test для тестов уже существует');
+            return;
+        }
+
         DB::statement('CREATE DATABASE apptica_test');
         $this->info('База данных apptica_test для тестов создана');
     }
